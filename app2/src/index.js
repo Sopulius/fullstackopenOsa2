@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom'
 import personService from './services/persons'
+import './index.css'
 
 class App extends React.Component {
   constructor(props) {
@@ -9,7 +10,8 @@ class App extends React.Component {
       persons: [],
       newName: '',
       newNumber: '',
-      newFilter: ''
+      newFilter: '',
+      notification: null,
     }
   }
 
@@ -30,8 +32,12 @@ class App extends React.Component {
             this.setState({
               persons: r,
               newName: '',
-              newNumber: ''
+              newNumber: '',
+              notification: 'Päivitettiin '+personObject.name
             })
+            setTimeout(()=>{
+              this.setState({notification: null})
+            }, 3000)
           })
         })
       }
@@ -42,8 +48,12 @@ class App extends React.Component {
       this.setState({
         persons: this.state.persons.concat(response),
         newName: '',
-        newNumber: ''
+        newNumber: '',
+        notification: 'Lisättiin '+ personObject.name
       })
+      setTimeout(()=>{
+        this.setState({notification: null})
+      }, 3000)
     })
     } 
 
@@ -62,9 +72,20 @@ class App extends React.Component {
   }
 
   handleDeletePerson = (id, event) => {
+    const person = this.state.persons.filter(p => p.id === id)[0]
     personService
     .deleteObject(id)
-    .then(response =>{personService.getAll().then(all => {this.setState({persons:all})})})
+    .then(response =>{personService
+      .getAll()
+      .then(all => {
+        this.setState({
+          persons:all,
+        notification: 'Poistettiin '+person.name
+      })
+      setTimeout(()=>{
+        this.setState({notification: null})
+      }, 3000)
+      })})
   }
 
   componentDidMount() {
@@ -82,6 +103,7 @@ class App extends React.Component {
     return (
       <div>
         <h2>Puhelinluettelo</h2>
+        <Notification message={this.state.notification}/>
         <Filter handleFilterChange={this.handleFilterChange} newFilter={this.newFilter}/>
         <form onSubmit={this.addPerson}>
         <h2>Lisää uusi</h2>
@@ -131,6 +153,17 @@ const Person = (props) => {
   return(
     <div>
       <li>{person.name} {person.number} <button onClick={()=>{if(window.confirm('Poistetaanko '+ person.name+'?')){handleDeletePerson(person.id)}}}>poista</button></li>
+    </div>
+  )
+}
+
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null
+  }
+  return (
+    <div className="notification">
+      {message}
     </div>
   )
 }
